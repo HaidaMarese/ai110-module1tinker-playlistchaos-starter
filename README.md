@@ -1,113 +1,157 @@
-# Playlist Chaos
+# Playlist Chaos — Completed Tinker
 
-Your AI assistant tried to build a smart playlist generator. The app runs, but some of the behavior is unpredictable. Your task is to explore the app, investigate the code, and use an AI assistant to debug and improve it.
+This repository contains my completed work for the AI110 Module 1 Tinker, *Playlist Chaos*. It is a Streamlit application that organizes songs into mood-based playlists such as **Hype**, **Chill**, and **Mixed**.
 
-This activity is your first chance to practice AI-assisted debugging on a codebase that is slightly messy, slightly mysterious, and intentionally imperfect.
+I used an AI coding assistant to investigate unexpected behavior, understand the relevant Python code, make focused changes, and verify each result in the running application
 
-You do not need to understand everything at once. Approach the app as a curious investigator, work with an AI assistant to explain what you find, and make targeted improvements.
+> Starter repository: [`ai110-module1tinker-playlistchaos-starter`](https://github.com/codepath/ai110-module1tinker-playlistchaos-starter)
 
----
+## Run it
+
+### Windows PowerShell
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+python -m streamlit run app.py
+```
+
+After starting the application, open:
+
+[http://localhost:8501](http://localhost:8501)
 
 ## How the code is organized
 
-### `app.py`  
+- **`app.py`** — contains the Streamlit user interface, including the mood profile, add-song form, playlist tabs, search, Lucky Pick, statistics, and history.
+- **`playlist_logic.py`** — contains the song classification, playlist-building, search, statistics, and Lucky Pick logic.
+- **`REFLECTION.md`** — contains my reflection about debugging the application and working with an AI coding assistant.
+- **`requirements.txt`** — contains the Python packages required to run the application.
 
-The Streamlit user interface. It handles things like:
+## What was fixed
 
-- Showing and updating the mood profile  
-- Adding songs  
-- Displaying playlists  
-- Lucky pick  
-- Stats and history
+### 1. `search_songs` — partial and case-insensitive search
 
-### `playlist_logic.py`  
+The original condition performed the substring comparison in the wrong direction:
 
-The logic behind the app, including:
+```python
+if value and value in q:
+```
 
-- Normalizing and classifying songs  
-- Building playlists  
-- Merging playlist data  
-- Searching  
-- Computing statistics  
-- Lucky pick mechanics
+It checked whether the complete artist name appeared inside the shorter search query.
 
-You will need to look at both files to understand how the app behaves.
+I corrected the condition to:
 
----
+```python
+if value and q in value:
+```
 
-## What you will do
+The query and artist name are converted to lowercase, so the search is case-insensitive.
 
-### 1. Explore the app  
+Examples:
 
-Run the app and try things out:
+- Searching `"AC"` finds **AC/DC**.
+- Searching `"mau"` finds **deadmau5**.
+- The song returned when searching `"mau"` is **Strobe**.
 
-- Add several songs with different titles, artists, genres, and energy levels  
-- Change the mood profile  
-- Use the search box  
-- Try the lucky pick  
-- Inspect the playlist tabs and stats  
-- Look at the history  
+### 2. `compute_playlist_stats` — Hype ratio
 
-As you explore, write down at least five things that feel confusing, inconsistent, or strange. These might be bugs, quirks, or unexpected design decisions.
+The Hype ratio previously used the wrong denominator, causing it to display `1.00`.
 
-### 2. Ask AI for help understanding the code  
+It now divides the number of Hype songs by the total number of songs:
 
-Pick one issue from your list. Use an AI coding assistant to:
+```python
+total = len(all_songs)
+hype_ratio = len(hype) / total if total > 0 else 0.0
+```
 
-- Explain the relevant code sections  
-- Walk through what the code is supposed to do  
-- Suggest reasons the behavior might not match expectations  
+With 11 Hype songs out of 22 total songs, the correct result is:
 
-For example:
+```text
+Hype ratio: 0.50
+```
 
-> "Here is the function that classifies songs. The app is mislabeling some songs. Help me understand what the function is doing and where the logic might need adjustment."
+### 3. `compute_playlist_stats` — average energy
 
-Before making changes, summarize in your own words what you think is happening.
+Average Energy previously did not correctly represent songs from every playlist.
 
-### 3. Fix at least four issues  
+It now adds the energy values from all songs and divides the result by the total number of songs:
 
-Make improvements based on your investigation.
+```python
+total_energy = sum(song.get("energy", 0) for song in all_songs)
+avg_energy = total_energy / len(all_songs)
+```
 
-For each fix:
+The corrected application displays:
 
-- Identify the source of the issue  
-- Decide whether to accept or adjust the AI assistant's suggestions  
-- Update the code  
-- Add a short comment describing the fix  
+```text
+Average energy: 5.73
+```
 
-Your fixes may involve logic, calculations, search behavior, playlist grouping, lucky pick behavior, or anything else you discover.
+## Refactor
 
-### 4. Test your changes  
+After committing the fixes, I refactored `search_songs` by replacing the manual loop with a list comprehension:
 
-After each fix, try interacting with the app again:
+```python
+def search_songs(
+    songs: List[Song],
+    query: str,
+    field: str = "artist",
+) -> List[Song]:
+    """Return songs matching the query on a given field."""
+    if not query:
+        return songs
 
-- Add new songs  
-- Change the profile  
-- Try search and stats  
-- Check whether playlists behave more consistently  
+    q = query.lower().strip()
 
-Confirm that the behavior matches your expectations.
+    return [
+        song
+        for song in songs
+        if q in str(song.get(field, "")).lower()
+    ]
+```
 
-### 5. Optional stretch goals  
+This refactor makes the function shorter and easier to read without changing its behavior.
 
-If you finish early or want an extra challenge, try one of these:
+## How I checked my work
 
-- Improve search behavior  
-- Add a "Recently added" view  
-- Add sorting controls  
-- Improve how Mixed songs are handled  
-- Add new features to the history view  
-- Introduce better error handling for empty playlists  
-- Add a new playlist category of your own design  
+I ran the Streamlit application and confirmed the following results:
 
----
+1. Searching `"AC"` returns **Thunderstruck** by AC/DC.
+2. Searching `"mau"` returns **Strobe** by deadmau5.
+3. Search works regardless of uppercase or lowercase letters.
+4. The Hype Ratio displays `0.50`.
+5. Average Energy displays `5.73`.
+6. Search continues working after the refactor.
+7. The application runs without an error at `http://localhost:8501`.
 
-## Tips for success
+## Git commits
 
-- You do not need to solve everything. Focus on exploring and learning.  
-- When confused, ask an AI assistant to explain the code or summarize behavior.  
-- Test the app often. Small experiments reveal useful clues.  
-- Treat surprising behavior as something worth investigating.  
-- Stay curious. The unpredictability is intentional and part of the experience.
+The work was separated into focused commits:
 
-When you finish, Playlist Chaos will feel more predictable, and you will have taken your first steps into AI-assisted debugging.
+```text
+fix: search now matches partial, case-insensitive queries
+fix: corrected playlist behavior
+refactor: improved structure and readability
+docs: add debugging reflection
+```
+
+## Reflection
+
+My complete debugging reflection is available in [`REFLECTION.md`](REFLECTION.md).
+
+The main lesson from this activity was that an AI suggestion should be treated as a hypothesis. I reproduced each problem, compared the actual behavior with the specification, made a focused change, and verified the result in the running application.
+
+## Author
+
+**Haida Makouangou**
+
+AI110 — Intro to AI-Native Programming  
+CodePath  
+Fall 2026
+
+## Acknowledgments
+
+- [CodePath](https://www.codepath.org/) for providing the AI110 course and starter project.
+- The original [`Playlist Chaos starter repository`](https://github.com/codepath/ai110-module1tinker-playlistchaos-starter).
