@@ -145,11 +145,9 @@ The main lesson from this activity was that an AI suggestion should be treated a
 
 ## Author
 
-**Haida Makouangou**
-
+**Haida Makouangou — UNC Charlotte Graduate**  
 AI110 — Intro to AI-Native Programming  
-CodePath  
-Fall 2026
+CodePath — Fall 2026
 
 ## Acknowledgments
 
